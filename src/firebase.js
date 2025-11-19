@@ -10,12 +10,12 @@ import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID
+  apiKey: "AIzaSyAqvWu5rCcHy8y52ZJD2-yERw5Q8E2Ht6E",
+  authDomain: "reservacion-48a62.firebaseapp.com",
+  projectId: "reservacion-48a62",
+  storageBucket: "reservacion-48a62.firebasestorage.app",
+  messagingSenderId: "712417807924",
+  appId: "1:712417807924:web:0341fed238bd2af7abc461"
 };
 
 // Initialize Firebase
