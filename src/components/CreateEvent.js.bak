@@ -1,0 +1,276 @@
+import React, { useState } from 'react';
+import { Container, Form, Button, Row, Col, InputGroup, Spinner } from 'react-bootstrap';
+import { db, storage } from '../firebase';
+import { collection, addDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { useNavigate } from 'react-router-dom';
+
+function CreateEvent() {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [time, setTime] = useState('');
+  const [place, setPlace] = useState('');
+  const [address, setAddress] = useState('');
+  const [note, setNote] = useState('');
+  const [image, setImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const [fields, setFields] = useState([
+    { id: 1, label: 'Name', type: 'text', required: true },
+    { id: 2, label: 'Number of people', type: 'number', required: true },
+    { id: 3, label: 'Approximate spending', type: 'number', required: false },
+  ]);
+
+  const addField = (type) => {
+    const newField = {
+      id: Date.now(), // Use timestamp for unique ID
+      label: '',
+      type: type,
+      required: false,
+      options: type === 'select' ? [''] : undefined,
+    };
+    setFields([...fields, newField]);
+  };
+
+  const handleFieldChange = (id, event) => {
+    const { name, value } = event.target;
+    const newFields = fields.map((field) => {
+      if (field.id === id) {
+        return { ...field, [name]: value };
+      }
+      return field;
+    });
+    setFields(newFields);
+  };
+
+  const handleOptionChange = (fieldId, optionIndex, event) => {
+    const newFields = fields.map((field) => {
+      if (field.id === fieldId) {
+        const newOptions = field.options.map((option, index) => {
+          if (index === optionIndex) {
+            return event.target.value;
+          }
+          return option;
+        });
+        return { ...field, options: newOptions };
+      }
+      return field;
+    });
+    setFields(newFields);
+  };
+
+  const addOption = (fieldId) => {
+    const newFields = fields.map((field) => {
+      if (field.id === fieldId) {
+        return { ...field, options: [...field.options, ''] };
+      }
+      return field;
+    });
+    setFields(newFields);
+  };
+
+  const removeOption = (fieldId, optionIndex) => {
+    const newFields = fields.map((field) => {
+      if (field.id === fieldId) {
+        const newOptions = field.options.filter((_, index) => index !== optionIndex);
+        return { ...field, options: newOptions };
+      }
+      return field;
+    });
+    setFields(newFields);
+  };
+
+  const removeField = (id) => {
+    setFields(fields.filter((field) => field.id !== id));
+  };
+
+  const handleImageChange = (e) => {
+    if (e.target.files[0]) {
+      setImage(e.target.files[0]);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      let imageUrl = '';
+      if (image) {
+        try {
+          const imageRef = ref(storage, `events/${Date.now()}_${image.name}`);
+          const snapshot = await uploadBytes(imageRef, image);
+          imageUrl = await getDownloadURL(snapshot.ref);
+        } catch (uploadError) {
+          console.error("Image upload failed:", uploadError);
+          alert("Failed to upload image (check Firebase Storage rules). Event will be created without it.");
+          // Proceed without image
+        }
+      }
+
+      // Deep clean function to remove undefined values from nested objects/arrays
+      const cleanData = (obj) => {
+        if (Array.isArray(obj)) {
+          return obj.map(item => cleanData(item));
+        } else if (obj !== null && typeof obj === 'object') {
+          const cleaned = {};
+          Object.keys(obj).forEach(key => {
+            if (obj[key] !== undefined) {
+              cleaned[key] = cleanData(obj[key]);
+            }
+          });
+          return cleaned;
+        }
+        return obj;
+      };
+
+      const eventData = cleanData({
+        title,
+        description,
+        time,
+        place,
+        address,
+        note,
+        imageUrl: imageUrl || 'placeholder',
+        fields,
+        status: 'active',
+        promoters: [],
+        createdAt: Date.now(),
+      });
+
+      const docRef = await addDoc(collection(db, 'events'), eventData);
+      setLoading(false);
+      navigate(`/event/${docRef.id}`);
+    } catch (error) {
+      console.error("Error creating event: ", error);
+      setLoading(false);
+      alert('Failed to create event. Please try again.');
+    }
+  };
+
+  return (
+    <Container className="my-4">
+      <h1>Create New Event</h1>
+      <Form onSubmit={handleSubmit}>
+        {/* Event Details */}
+        <Form.Group className="mb-3">
+          <Form.Label>Title</Form.Label>
+          <Form.Control type="text" value={title} onChange={(e) => setTitle(e.target.value)} required disabled={loading} />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Description</Form.Label>
+          <Form.Control as="textarea" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} disabled={loading} />
+        </Form.Group>
+        <Row>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Time</Form.Label>
+              <Form.Control type="datetime-local" value={time} onChange={(e) => setTime(e.target.value)} disabled={loading} />
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Place / Venue Name</Form.Label>
+              <Form.Control type="text" value={place} onChange={(e) => setPlace(e.target.value)} disabled={loading} />
+            </Form.Group>
+          </Col>
+        </Row>
+        <Form.Group className="mb-3">
+          <Form.Label>Address</Form.Label>
+          <Form.Control type="text" value={address} onChange={(e) => setAddress(e.target.value)} disabled={loading} />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Note</Form.Label>
+          <Form.Control as="textarea" rows={2} value={note} onChange={(e) => setNote(e.target.value)} disabled={loading} />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Cover Image</Form.Label>
+          <Form.Control type="file" onChange={handleImageChange} disabled={loading} />
+        </Form.Group>
+
+        {/* Custom Form Builder */}
+        <h3 className="mt-5">Reservation Form Fields</h3>
+        {fields.map((field) => (
+          <div key={field.id} className="p-3 mb-3 border rounded bg-light">
+            <Row className="align-items-center">
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label>Field Label</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="label"
+                    value={field.label}
+                    onChange={(e) => handleFieldChange(field.id, e)}
+                    placeholder="e.g., Email Address"
+                    disabled={loading}
+                  />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group>
+                  <Form.Label>Field Type</Form.Label>
+                  <Form.Control as="select" name="type" value={field.type} disabled>
+                    <option value="text">Text</option>
+                    <option value="number">Number</option>
+                    <option value="date">Date</option>
+                    <option value="select">Select</option>
+                  </Form.Control>
+                </Form.Group>
+              </Col>
+              <Col xs="auto" className="d-flex align-items-center">
+                <Form.Check
+                  type="checkbox"
+                  label="Internal (Admin/Promoter only)"
+                  checked={field.isInternal || false}
+                  onChange={(e) => handleFieldChange(field.id, { target: { name: 'isInternal', value: e.target.checked } })}
+                />
+              </Col>
+              <Col xs="auto" className="d-flex align-items-end">
+                {!field.required && (
+                  <Button variant="danger" onClick={() => removeField(field.id)} disabled={loading}>
+                    Remove
+                  </Button>
+                )}
+              </Col>
+            </Row>
+            {field.type === 'select' && (
+              <div className="mt-3">
+                <h6>Select Options</h6>
+                {field.options.map((option, index) => (
+                  <InputGroup className="mb-2" key={index}>
+                    <Form.Control
+                      type="text"
+                      value={option}
+                      onChange={(e) => handleOptionChange(field.id, index, e)}
+                      placeholder={`Option ${index + 1}`}
+                      disabled={loading}
+                    />
+                    <Button variant="outline-danger" onClick={() => removeOption(field.id, index)} disabled={loading}>
+                      &times;
+                    </Button>
+                  </InputGroup>
+                ))}
+                <Button variant="outline-primary" size="sm" onClick={() => addOption(field.id)} disabled={loading}>
+                  + Add Option
+                </Button>
+              </div>
+            )}
+          </div>
+        ))}
+        <div className="mb-3">
+          <Button variant="outline-secondary" className="me-2" size="sm" onClick={() => addField('text')} disabled={loading}>+ Text</Button>
+          <Button variant="outline-secondary" className="me-2" size="sm" onClick={() => addField('number')} disabled={loading}>+ Number</Button>
+          <Button variant="outline-secondary" className="me-2" size="sm" onClick={() => addField('date')} disabled={loading}>+ Date</Button>
+          <Button variant="outline-secondary" size="sm" onClick={() => addField('select')} disabled={loading}>+ Select</Button>
+        </div>
+
+        <Button variant="primary" type="submit" className="mt-4 w-100" disabled={loading}>
+          {loading ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> : 'Save Event'}
+        </Button>
+      </Form>
+    </Container>
+  );
+}
+
+export default CreateEvent;
