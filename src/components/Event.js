@@ -43,9 +43,8 @@ function Event() {
 
   // Construct URLs
   const baseUrl = window.location.origin;
-  // If user is promoter, append their ID. If admin, maybe show generic or let them choose? 
-  // For now, Admin gets generic link, Promoter gets ref link.
-  const reservationUrl = `${baseUrl}/reservation/${id}` + (userProfile?.role === 'promoter' ? `?ref=${userProfile.uid}` : '');
+  // If user is promoter or admin, append their ID.
+  const reservationUrl = `${baseUrl}/reservation/${id}` + (userProfile?.uid ? `?ref=${userProfile.uid}` : '');
   const inviteUrl = `${baseUrl}/join/${id}`;
 
   useEffect(() => {
@@ -60,7 +59,7 @@ function Event() {
   useEffect(() => {
     if (selectedFieldId && customFieldValue) {
       const params = new URLSearchParams();
-      if (userProfile?.role === 'promoter') {
+      if (userProfile?.uid) {
         params.append('ref', userProfile.uid);
       }
       params.append('field_id', selectedFieldId);
