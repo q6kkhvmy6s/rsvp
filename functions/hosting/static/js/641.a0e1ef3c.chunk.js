@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkreservaciones_admin=self.webpackChunkreservaciones_admin||[]).push([[641],{6641:(e,n,r)=>{r.r(n),r.d(n,{default:()=>a});r(5043);var s=r(8163),c=r(5016),t=r(579);function a(e){let{children:n}=e;const{currentUser:r}=(0,c.A)();return r?n:(0,t.jsx)(s.C5,{to:"/login"})}}}]);
+//# sourceMappingURL=641.a0e1ef3c.chunk.js.map

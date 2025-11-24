@@ -18,9 +18,9 @@ function CreateEvent() {
   const [primaryField, setPrimaryField] = useState(null);
 
   const [fields, setFields] = useState([
-    { id: 1, label: 'Name', type: 'text', required: true },
-    { id: 2, label: 'Number of people', type: 'number', required: true },
-    { id: 3, label: 'Approximate spending', type: 'number', required: false },
+    { id: 1, label: 'Nombre', type: 'text', required: true },
+    { id: 2, label: 'Número de personas', type: 'number', required: true },
+    { id: 3, label: 'Gasto aproximado', type: 'number', required: false },
   ]);
 
   const addField = (type) => {

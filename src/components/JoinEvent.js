@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
 import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { formatDate } from '../utils';
+import PageLoader from './PageLoader';
 
 export default function JoinEvent() {
     const { id } = useParams(); // Event ID
@@ -25,7 +26,9 @@ export default function JoinEvent() {
             try {
                 const eventDoc = await getDoc(doc(db, 'events', id));
                 if (eventDoc.exists()) {
-                    setEvent({ id: eventDoc.id, ...eventDoc.data() });
+                    const eventData = { id: eventDoc.id, ...eventDoc.data() };
+                    setEvent(eventData);
+                    document.title = eventData.title;
                 } else {
                     setError('Event not found');
                 }
@@ -37,6 +40,10 @@ export default function JoinEvent() {
             }
         };
         fetchEvent();
+
+        return () => {
+            document.title = 'Reservaciones';
+        };
     }, [id]);
 
     const handleJoin = async () => {
@@ -126,7 +133,7 @@ export default function JoinEvent() {
         }
     };
 
-    if (loading) return <Container className="text-center mt-5"><Spinner animation="border" /></Container>;
+    if (loading) return <PageLoader />;
     if (error) return <Container className="mt-5"><Alert variant="danger">{error}</Alert></Container>;
 
     return (

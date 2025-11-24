@@ -1,7 +1,8 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { Container, Spinner } from 'react-bootstrap';
+import { Container } from 'react-bootstrap';
+import PageLoader from './components/PageLoader';
 
 // Lazy load components for better performance
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -15,15 +16,7 @@ const JoinEvent = lazy(() => import('./components/JoinEvent'));
 const PrivateRoute = lazy(() => import('./components/PrivateRoute'));
 const AdminUsers = lazy(() => import('./components/AdminUsers'));
 const AccountSettings = lazy(() => import('./components/AccountSettings'));
-
-// Loading component
-const PageLoader = () => (
-  <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
-    <Spinner animation="border" role="status" variant="primary">
-      <span className="visually-hidden">Loading...</span>
-    </Spinner>
-  </div>
-);
+const NotFound = lazy(() => import('./components/NotFound'));
 
 function App() {
   return (
@@ -45,6 +38,9 @@ function App() {
               <Route path="/users" element={<PrivateRoute><AdminUsers /></PrivateRoute>} />
               <Route path="/event/:id" element={<PrivateRoute><Event /></PrivateRoute>} />
               <Route path="/settings" element={<PrivateRoute><AccountSettings /></PrivateRoute>} />
+
+              {/* 404 Route */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
         </Container>

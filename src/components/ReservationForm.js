@@ -4,6 +4,7 @@ import { Container, Form, Button, Card, Spinner, Alert } from 'react-bootstrap';
 import { db } from '../firebase';
 import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { formatDate } from '../utils';
+import PageLoader from './PageLoader';
 
 function ReservationForm() {
     const { id } = useParams();
@@ -37,11 +38,12 @@ function ReservationForm() {
                 if (eventSnapshot.exists()) {
                     const data = eventSnapshot.data();
                     if (data.status === 'disabled') {
-                        setError('This event is no longer accepting reservations.');
+                        setError('Este evento ya no acepta reservaciones.');
                     } else if (data.acceptingReservations === false) {
-                        setError('Reservations for this event are currently paused. Please check back later.');
+                        setError('Las reservaciones para este evento están pausadas actualmente. Por favor, vuelve a intentarlo más tarde.');
                     } else {
                         setEvent({ id: eventSnapshot.id, ...data });
+                        document.title = data.title;
                         // Initialize form data
                         const initialData = {};
                         data.fields.forEach(field => {
@@ -62,17 +64,21 @@ function ReservationForm() {
                         setFormData(initialData);
                     }
                 } else {
-                    setError('Event not found.');
+                    setError('Evento no encontrado.');
                 }
             } catch (err) {
                 console.error(err);
-                setError('Failed to load event details.');
+                setError('Error al cargar los detalles del evento.');
             } finally {
                 setLoading(false);
             }
         };
 
         fetchEvent();
+
+        return () => {
+            document.title = 'Reservaciones';
+        };
     }, [id, prefilledFieldId, prefilledFieldValue]);
 
 
@@ -95,13 +101,13 @@ function ReservationForm() {
             setSubmitted(true);
         } catch (err) {
             console.error(err);
-            alert('Failed to submit reservation. Please try again.');
+            alert('Error al enviar la reservación. Por favor, inténtalo de nuevo.');
         } finally {
             setSubmitting(false);
         }
     };
 
-    if (loading) return <Container className="text-center my-5"><Spinner animation="border" /></Container>;
+    if (loading) return <PageLoader />;
     if (error) return <Container className="my-5"><Alert variant="danger">{error}</Alert></Container>;
 
     if (submitted) {
@@ -109,11 +115,11 @@ function ReservationForm() {
             <Container className="my-5">
                 <Card className="text-center p-5 shadow-sm">
                     <Card.Body>
-                        <h2 className="text-success mb-4">Reservation Confirmed!</h2>
-                        <p className="lead">Thank you for reserving your spot at <strong>{event.title}</strong>.</p>
+                        <h2 className="text-success mb-4">¡Reservación Confirmada!</h2>
+                        <p className="lead">Gracias por reservar tu lugar en <strong>{event.title}</strong>.</p>
                         <hr />
                         <div className="text-start d-inline-block">
-                            <h5 className="mb-3">Your Details:</h5>
+                            <h5 className="mb-3">Tus Detalles:</h5>
                             {event.fields.filter(f => !f.isInternal).map(field => (
                                 <p key={field.id}><strong>{field.label}:</strong> {formData[field.label]}</p>
                             ))}
@@ -174,7 +180,7 @@ function ReservationForm() {
                                         value={formData[field.label] || ''}
                                         onChange={(e) => handleChange(field.label, e.target.value)}
                                     >
-                                        <option value="">Select an option...</option>
+                                        <option value="">Selecciona una opción...</option>
                                         {field.options.map((opt, idx) => (
                                             <option key={idx} value={opt}>{opt}</option>
                                         ))}
@@ -191,7 +197,7 @@ function ReservationForm() {
                             </Form.Group>
                         ))}
                         <Button variant="primary" type="submit" className="w-100 mt-3" disabled={submitting}>
-                            {submitting ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> : 'Confirm Reservation'}
+                            {submitting ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> : 'Confirmar Reservación'}
                         </Button>
                     </Form>
                 </Card.Body>
