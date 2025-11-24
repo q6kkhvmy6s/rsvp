@@ -30,7 +30,7 @@ const EventPlaceholder = ({ title }) => {
 function Event() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { userProfile } = useAuth();
+  const { userProfile, currentUser } = useAuth();
   const [event, setEvent] = useState(null);
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +44,7 @@ function Event() {
   // Construct URLs
   const baseUrl = window.location.origin;
   // If user is promoter or admin, append their ID.
-  const reservationUrl = `${baseUrl}/reservation/${id}` + (userProfile?.uid ? `?ref=${userProfile.uid}` : '');
+  const reservationUrl = `${baseUrl}/reservation/${id}` + (currentUser?.uid ? `?ref=${currentUser.uid}` : '');
   const inviteUrl = `${baseUrl}/join/${id}`;
 
   useEffect(() => {
@@ -59,8 +59,8 @@ function Event() {
   useEffect(() => {
     if (selectedFieldId && customFieldValue) {
       const params = new URLSearchParams();
-      if (userProfile?.uid) {
-        params.append('ref', userProfile.uid);
+      if (currentUser?.uid) {
+        params.append('ref', currentUser.uid);
       }
       params.append('field_id', selectedFieldId);
       // Encode value to Base64 to hide it from plain view
@@ -70,7 +70,7 @@ function Event() {
     } else {
       setPrefilledLink('');
     }
-  }, [id, baseUrl, userProfile, selectedFieldId, customFieldValue]);
+  }, [id, baseUrl, userProfile, currentUser, selectedFieldId, customFieldValue]);
 
   useEffect(() => {
     const fetchData = async () => {
